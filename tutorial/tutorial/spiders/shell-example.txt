@@ -1,0 +1,65 @@
+XPath expressions are very powerful, and are the foundation of Scrapy Selectors. In fact, CSS selectors are converted to XPath under-the-hood. You can see that if you read closely the text representation of the selector objects in the shell.
+
+While perhaps not as popular as CSS selectors, XPath expressions offer more power because besides navigating the structure, it can also look at the content. Using XPath, you’re able to select things like: select the link that contains the text “Next Page”. This makes XPath very fitting to the task of scraping, and we encourage you to learn XPath even if you already know how to construct CSS selectors, it will make scraping much easier.
+
+
+$ scrapy shell 'http://quotes.toscrape.com'
+
+>>> response.css("div.quote")
+[<Selector xpath="descendant-or-self::div[@class and contains(concat(' ', normalize-space(@class), ' '), ' quote ')]"
+
+>>> quote = response.css("div.quote")[0]
+>>> quote
+<Selector xpath="descendant-or-self::div[@class and contains(concat(' ', normalize-space(@class), ' '), ' quote ')]" data='<div class="quote" itemscope itemtype="h'>
+
+
+Given that the tags are a list of strings, we can use the .extract() method to get all of them:
+
+>>> tags = quote.css("div.tags a.tag::text").extract()
+>>> tags
+['change', 'deep-thoughts', 'thinking', 'world']
+
+
+
+>>> for quote in response.css("div.quote"):
+...     text = quote.css("span.text::text").extract_first()
+...     author = quote.css("small.author::text").extract_first()
+...     tags = quote.css("div.tags a.tag::text").extract()
+...     print(dict(text=text, author=author, tags=tags))
+{'tags': ['change', 'deep-thoughts', 'thinking', 'world'], 'author': 'Albert Einstein', 'text': '“The world as we have created it is a process of our thinking. It cannot be changed without changing our thinking.”'}
+{'tags': ['abilities', 'choices'], 'author': 'J.K. Rowling', 'text': '“It is our choices, Harry, that show what we truly are, far more than our abilities.”'}
+    ... a few more of these, omitted for brevity
+>>>
+
+
+
+
+A Scrapy spider typically generates many dictionaries containing the data extracted from the page. To do that, we use the yield Python keyword in the callback, as you can see below:
+
+
+scrapy crawl quotes
+
+
+
+# Saving the data
+
+Storing the scraped data
+
+The simplest way to store the scraped data is by using Feed exports, with the following command:
+
+scrapy crawl quotes -o quotes.json
+
+
+
+
+For historic reasons, Scrapy appends to a given file instead of overwriting its contents. If you run this command twice without removing the file before the second time, you’ll end up with a broken JSON file.
+
+
+The JSON Lines format is useful because it’s stream-like, you can easily append new records to it. It doesn’t have the same problem of JSON when you run twice. Also, as each record is a separate line, you can process big files without having to fit everything in memory, there are tools like JQ to help doing that at the command-line.
+
+
+
+
+
+By default, Scrapy filters out duplicated requests to URLs already visited, avoiding the problem of hitting servers too much because of a programming mistake. This can be configured by the setting DUPEFILTER_CLASS.
+

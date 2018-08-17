@@ -1,9 +1,23 @@
 import scrapy
 
+# to run the spider: scrapy crawl quotes from root project directory
+
 
 class QuotesSpider(scrapy.Spider):
     # name of spider must be unique within a project
     name = "quotes"
+
+
+    """
+    Instead of the start_request method you can just add start urls
+    as a class attribute and parse will be called automatically
+
+    parse() is Scrapy’s default callback method
+    """
+    # start_urls = [
+    #     'http://quotes.toscrape.com/page/1/',
+    #     'http://quotes.toscrape.com/page/2/',
+    # ]
 
 
     def start_requests(self):
